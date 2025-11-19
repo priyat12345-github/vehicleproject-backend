@@ -12,11 +12,26 @@ import EmailLog from "./models/EmailLog.js";
 
 const app = express();
 app.use(express.json());
-app.use(cors({
-  origin: "http://localhost:3000", // your React frontend
-  methods: ["GET", "POST"],
-  credentials: true
-}));
+app.use(
+  cors({
+    origin: [
+      "http://localhost:3000",
+      "http://vehicle-frontend-priya.s3-website.eu-north-1.amazonaws.com"
+    ],
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+    credentials: true
+  })
+);
+app.use((req, res, next) => {
+  res.header("Access-Control-Allow-Origin", "http://vehicle-frontend-priya.s3-website.eu-north-1.amazonaws.com");
+  res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  res.header("Access-Control-Allow-Methods", "GET, POST");
+  next();
+});
+
+
+
 app.use("/api/auth", authRoutes);
 
 if (!process.env.MONGO_URI) {
