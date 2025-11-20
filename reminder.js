@@ -8,7 +8,7 @@ import EmailLog from "./models/EmailLog.js";
 dotenv.config();
 
 // 🕒 Runs every day at 9 AM (for testing use "*/1 * * * *")
-cron.schedule("0 9 * * *", async () => {
+cron.schedule("*/1 * * * *", async () => {
   console.log("🔍 Running vehicle expiry reminder check...");
 
   try {
