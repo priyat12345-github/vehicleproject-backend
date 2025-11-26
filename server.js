@@ -148,7 +148,7 @@ app.post("/api/send-reminder/:number", async (req, res) => {
 app.post("/api/updateLocation", async (req, res) => { 
   const { number, latitude, longitude } = req.body; 
   await Vehicle.findOneAndUpdate( 
-    { regNumber }, 
+    { number }, 
     { 
       lastLocation: { 
         latitude, 
