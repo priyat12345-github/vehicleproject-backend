@@ -161,6 +161,17 @@ app.post("/api/updateLocation", async (req, res) => {
   
   res.json({ success: true }); 
 });
+app.get("/api/getLocation", async (req, res) => {
+  const { number } = req.query;
+
+  const vehicle = await Vehicle.findOne({ number });
+  if (!vehicle || !vehicle.lastLocation) {
+    return res.json({ success: false, message: "No location found" });
+  }
+
+  res.json({ success: true, location: vehicle.lastLocation });
+});
+
 
 const PORT = process.env.PORT || 5001;
 app.listen(PORT, () => console.log(`🚗 Server running on port ${PORT}`));
