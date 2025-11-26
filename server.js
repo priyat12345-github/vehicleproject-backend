@@ -144,5 +144,23 @@ app.post("/api/send-reminder/:number", async (req, res) => {
     res.status(500).json({ message: "Failed to send reminder" });
   }
 });
+
+app.post("/api/updateLocation", async (req, res) => { 
+  const { regNumber, latitude, longitude } = req.body; 
+  await Vehicle.findOneAndUpdate( 
+    { regNumber }, 
+    { 
+      lastLocation: { 
+        latitude, 
+        longitude, 
+        timestamp: new Date() 
+      } 
+    }, 
+    { upsert: true } 
+  ); 
+  
+  res.json({ success: true }); 
+});
+
 const PORT = process.env.PORT || 5001;
 app.listen(PORT, () => console.log(`🚗 Server running on port ${PORT}`));

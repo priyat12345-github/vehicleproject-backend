@@ -8,8 +8,15 @@ const vehicleSchema = new mongoose.Schema({
   owner: String,
   ownerEmail: String,
   insuranceExpiry: Date,
-  pucExpiry: Date
+  pucExpiry: Date,
+
+  // ⭐ ADD THIS NEW FIELD FOR GPS LOCATION
+  lastLocation: {
+    latitude: { type: Number, default: null },
+    longitude: { type: Number, default: null },
+    timestamp: { type: Date, default: null }
+  }
 });
 
 const Vehicle = mongoose.model("Vehicle", vehicleSchema);
-export default Vehicle; // ✅ Must be default export
+export default Vehicle;
