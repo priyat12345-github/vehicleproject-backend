@@ -1,20 +1,21 @@
 import express from "express";
-import Payment from "../models/Payment.js";
+import Payment from "../models/Payment.js";  // create this model
 import PDFDocument from "pdfkit";
 import fs from "fs";
 import path from "path";
 
 const router = express.Router();
 
-// --------------------------
-// 1️⃣ CREATE PAYMENT + PDF
-// --------------------------
+
+// ----------------------
+// 1️⃣ MAKE PAYMENT ENTRY
+// ----------------------
 router.post("/pay", async (req, res) => {
   try {
     const { name, vehicle, insuranceType, amount } = req.body;
 
-    // Save payment in DB
-    const payment = await Payment.create({
+    // Save payment in MongoDB
+    const payment = new Payment({
       name,
       vehicle,
       insuranceType,
@@ -22,15 +23,37 @@ router.post("/pay", async (req, res) => {
       date: new Date(),
     });
 
-    // Correct absolute path
-    const fileName = `receipt-${payment._id}.pdf`;
-    const filePath = path.resolve("uploads", fileName);
+    await payment.save();
 
-    // Create PDF
+    res.json({
+      success: true,
+      data: payment, // contains _id
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+
+// ----------------------
+// 2️⃣ GENERATE PDF RECEIPT
+// ----------------------
+router.get("/receipt/:id", async (req, res) => {
+  try {
+    const payment = await Payment.findById(req.params.id);
+
+    if (!payment) {
+      return res.status(404).json({ message: "Payment not found" });
+    }
+
+    const fileName = `receipt-${payment._id}.pdf`;
+    const filePath = path.join("uploads", fileName);
+
     const doc = new PDFDocument();
     const stream = fs.createWriteStream(filePath);
     doc.pipe(stream);
 
+    // PDF Content
     doc.fontSize(22).text("Vehicle Insurance Receipt", { align: "center" });
     doc.moveDown();
 
@@ -42,38 +65,13 @@ router.post("/pay", async (req, res) => {
 
     doc.end();
 
-    // Wait for PDF to finish writing
     stream.on("finish", () => {
-      console.log("📄 PDF created:", filePath);
-
-      res.json({
-        success: true,
-        data: payment,
-        receiptUrl: `/uploads/${fileName}`, // front-end can use this
-      });
-    });
-
-    stream.on("error", (err) => {
-      console.error("❌ PDF generation error:", err);
+      res.download(filePath);
     });
 
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
-});
-
-// --------------------------
-// 2️⃣ DOWNLOAD EXISTING PDF
-// --------------------------
-router.get("/receipt/:id", (req, res) => {
-  const fileName = `receipt-${req.params.id}.pdf`;
-  const filePath = path.resolve("uploads", fileName);
-
-  if (!fs.existsSync(filePath)) {
-    return res.status(404).send("Receipt not found");
-  }
-
-  res.download(filePath);
 });
 
 export default router;
