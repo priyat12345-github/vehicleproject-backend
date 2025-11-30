@@ -6,14 +6,14 @@ import path from "path";
 
 const router = express.Router();
 
-// ----------------------
+// --------------------------
 // 1️⃣ CREATE PAYMENT + PDF
-// ----------------------
+// --------------------------
 router.post("/pay", async (req, res) => {
   try {
     const { name, vehicle, insuranceType, amount } = req.body;
 
-    // Save to DB
+    // Save payment in DB
     const payment = await Payment.create({
       name,
       vehicle,
@@ -22,7 +22,7 @@ router.post("/pay", async (req, res) => {
       date: new Date(),
     });
 
-    // PDF file path
+    // Correct absolute path
     const fileName = `receipt-${payment._id}.pdf`;
     const filePath = path.resolve("uploads", fileName);
 
@@ -42,12 +42,19 @@ router.post("/pay", async (req, res) => {
 
     doc.end();
 
+    // Wait for PDF to finish writing
     stream.on("finish", () => {
+      console.log("📄 PDF created:", filePath);
+
       res.json({
         success: true,
         data: payment,
-        receiptUrl: `/uploads/${fileName}`,
+        receiptUrl: `/uploads/${fileName}`, // front-end can use this
       });
+    });
+
+    stream.on("error", (err) => {
+      console.error("❌ PDF generation error:", err);
     });
 
   } catch (err) {
@@ -55,10 +62,10 @@ router.post("/pay", async (req, res) => {
   }
 });
 
-// ----------------------
-// 2️⃣ DOWNLOAD PDF RECEIPT
-// ----------------------
-router.get("/receipt/:id", async (req, res) => {
+// --------------------------
+// 2️⃣ DOWNLOAD EXISTING PDF
+// --------------------------
+router.get("/receipt/:id", (req, res) => {
   const fileName = `receipt-${req.params.id}.pdf`;
   const filePath = path.resolve("uploads", fileName);
 
